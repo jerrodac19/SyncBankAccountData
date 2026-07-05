@@ -11,7 +11,7 @@ from datetime import datetime
 from data_retrievers import BrowserDataRetriever, ApiDataStoreRobust
 from data_models import AccountData, TransactionData, BillData
 from GoogleSheets import appendToSheet
-from getWalmartReceipt_p import getWalmartReceipt
+from Walmart import getWalmartReceipt
 
 # Global constants moved here
 PUSHNOTIFSCRIPT = "C:/Users/jerro/Documents/SendPushNotification.ps1"

@@ -11,6 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>SyncBankAccountData</Name>
     <RootNamespace>SyncBankAccountData</RootNamespace>
+    <PublishUrl>\\MR-BADASS\Shared\BillWebsiteScripts\SyncBankAccountData</PublishUrl>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,7 +24,7 @@
   <ItemGroup>
     <Compile Include="data_models.py" />
     <Compile Include="data_retrievers.py" />
-    <Compile Include="getWalmartReceipt_p.py" />
+    <Compile Include="Walmart.py" />
     <Compile Include="GoogleSheets.py" />
     <Compile Include="main.py" />
   </ItemGroup>
