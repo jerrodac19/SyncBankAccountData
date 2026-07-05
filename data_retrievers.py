@@ -105,7 +105,12 @@ class BrowserDataRetriever(DataRetriever):
             self._human_behavior(page)
             
             # Get balance
-            balance = self._get_balance(page)
+            try:
+                balance = self._get_balance(page)
+            except Exception as e:
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Exception in getting balance: {e}")
+                context.close()
+                raise e
 
             # Get transactions
             transactions = self._get_next_transactions(page, accountstring, num_transactions)
@@ -159,7 +164,7 @@ class BrowserDataRetriever(DataRetriever):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Unable to find balance")
             page.screenshot(path=ERRORSCREENSHOT2)
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {ERRORSCREENSHOT2}")
-            balance = 0
+            raise ValueError("Unable to find balance")
         
         return balance
 

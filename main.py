@@ -185,7 +185,10 @@ if __name__ == "__main__":
     api_store = ApiDataStoreRobust()
 
     # The main script now orchestrates the process with simple function calls
-    browser_data = browser_retriever.retrieve_all_data(ACCOUNT_ID, NUMTRANSACTIONS)
-    process_and_sync_transactions(browser_data, api_store)
+    try:
+        browser_data = browser_retriever.retrieve_all_data(ACCOUNT_ID, NUMTRANSACTIONS)
+        process_and_sync_transactions(browser_data, api_store)
+    except Exception as e:
+        send_push_notification(f"Exception: {e}")
 
     print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Finished checking account")
