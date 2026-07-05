@@ -110,7 +110,7 @@ def sync_and_find_new_transactions(local_transactions: List[TransactionData], we
                 if re.search('WM SUPERCENT|WAL-MART', web_t.description):
                     storeId = re.search('(?<=#)[0-9]+', web_t.description).group()
                     cardDigits = re.search('(?<=CARD )[0-9]+', web_t.description).group()
-                    walmarttransactions.append({'date' : best_match.creationTime.strftime('%m-%d-%Y'), 'total' : web_t.withdrawal, 'card' : cardDigits, 'store': storeId})
+                    walmarttransactions.append({'date' : web_t.creationTime.strftime('%m-%d-%Y'), 'total' : web_t.withdrawal, 'card' : cardDigits, 'store': storeId})
             
     if len(spreadsheettransactiondata) > 0:
         appendToSheet(spreadsheettransactiondata)
