@@ -33,94 +33,76 @@ class DataRetriever(ABC):
 # --- Browser Automation Class (the new 'main' logic for scraping) ---
 class BrowserDataRetriever(DataRetriever):
     def retrieve_all_data(self, accountstring: str, num_transactions: int) -> AccountData:
-        def human_scroll(page):
-            # Scroll down in small, random increments
-            for i in range(random.randint(3, 6)):
-                scroll_amount = random.randint(200, 500)
-                page.evaluate(f"window.scrollBy(0, {scroll_amount})")
-                time.sleep(random.uniform(0.5, 1.5))
-            
-            # Scroll back up a little bit (like a human re-reading)
-            page.evaluate("window.scrollBy(0, -150)")
-
-        def human_mouse_move(page):
-            viewport = page.viewport_size
-            width, height = viewport['width'], viewport['height']
-            
-            for _ in range(random.randint(3, 6)):
-                x = random.randint(100, width - 100)
-                y = random.randint(100, height - 100)
-                # In Sync, this happens sequentially
-                page.mouse.move(x, y, steps=random.randint(15, 30))
-                time.sleep(random.uniform(0.1, 0.4))
         print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Starting browser session.")
         workingDir = os.path.dirname(os.path.realpath(__file__))
+        user_data_path = os.path.join(workingDir, "browser_profile")
         with sync_playwright() as p:
             #create a simulated page to mimic human interaction
             browser_args = [
-                "--no-sandbox", # Essential for some Linux environments
+                "--no-sandbox",
                 "--disable-setuid-sandbox",
-                "--disable-blink-features=AutomationControlled", # Directly fights some automation flags
-                "--disable-infobars", # Removes "Chrome is being controlled by automated test software"
-                "--disable-extensions", # Prevents loading extensions that might be detectable
-                "--mute-audio", # Some sites check audio capabilities
-                "--disable-dev-shm-usage", # Addresses shared memory issues on Linux/Docker
-                "--incognito", # Start in incognito mode (clean session)
-                "--start-maximized", # Simulate a maximized window (even headless)
-                "--headless=new"
+                "--disable-blink-features=AutomationControlled",
+                "--disable-infobars",
+                "--disable-extensions",
+                "--mute-audio",
+                "--disable-dev-shm-usage",
+                "--start-maximized"
             ]
-            # Browser setup and stealth settings...
-            browser = p.chromium.launch(headless=True,args=browser_args)
-            context = browser.new_context(
-                storage_state=workingDir + '\\state_wells_fargo.json',
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36", # Set a realistic UA
-                locale="en-US", # Match a common locale
-                timezone_id="America/Phoenix", # Set a realistic timezone
-                geolocation={"latitude": 33.424768, "longitude": -111.738027, "accuracy": 100}, # Realistic geo-location
-                permissions=['geolocation'], # Grant permissions if needed
-                viewport={"width": 1920, "height": 1080}, # Simulate a common screen resolution
-                device_scale_factor=1,
-                is_mobile=False,
-                has_touch=False,
+
+            # Persistent context replaces the need to manually load/save storageState
+            context = p.chromium.launch_persistent_context(
+                user_data_dir=user_data_path,
+                headless=True,
+                args=browser_args,
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+                viewport={"width": 1920, "height": 1080},
+                locale="en-US",
+                timezone_id="America/Phoenix",
+                geolocation={"latitude": 33.424768, "longitude": -111.738027, "accuracy": 100},
+                permissions=['geolocation']
             )
-            page = context.new_page()
+            
+            page = context.pages[0] if context.pages else context.new_page()
             stealth_sync(page)
-            human_mouse_move(page)
-            human_scroll(page)
-            time.sleep(random.uniform(3, TIMEOUT)) 
+
+            time.sleep(random.uniform(3, TIMEOUT))
             
             # Login and navigation logic (moved from get_balance)
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigating to {ACCOUNTWEBSITE}")
             page.goto(ACCOUNTWEBSITE, timeout=60000)
             try:
-                page.wait_for_load_state("networkidle") # Wait for the page to fully load
+                page.wait_for_load_state("domcontentloaded")
             except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Excpetion waiting for webpage to load: {e}")
                 page.screenshot(path=ERRORSCREENSHOT1)
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {ERRORSCREENSHOT1}")
             
+            time.sleep(1)
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Attempting Login")
-            field1 = "#j_username"
-            value1 = "jerrodac18"
-            field2 = "#j_password"
-            value2 = keyring.get_password('WellsFargo', value1)
-            field3 = "xpath=//button[text() = 'Sign on']"
-            if value2 == None:
+            usernamefield = "#j_username"
+            username = "jerrodac18"
+            passwordfield = "#j_password"
+            password = keyring.get_password('WellsFargo', username)
+            signonbutton = "xpath=//button[text() = 'Sign on']"
+            if password == None:
                 raise ValueError("WellsFargo Password not found")
             
             try:
-                page.locator(field1).fill("")
-                page.locator(field1).fill(value1)
-                time.sleep(random.uniform(3, TIMEOUT))
-                page.locator(field2).fill("")
-                page.locator(field2).fill(value2)
-                time.sleep(random.uniform(3, TIMEOUT))
-                page.locator(field3).click()
+                page.wait_for_selector(usernamefield)
+                page.locator(usernamefield).wait_for(state="visible")
+                page.locator(usernamefield).wait_for(state="attached")
+                page.locator(usernamefield).type(username, delay=random.randint(60, 150))
+                page.locator(passwordfield).type(password, delay=random.randint(60, 150))
+                page.locator(signonbutton).click()
                 page.wait_for_load_state("networkidle")
+                time.sleep(random.uniform(2, 4))
             except Exception as e:
-                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Excpetion in second step: {e}")
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Exception in logging in: {e}")
             
             self._check_for_and_reject_offer(page)
+            
+            # Add human noise only when on the dashboard
+            self._human_behavior(page)
             
             # Get balance
             balance = self._get_balance(page)
@@ -137,10 +119,19 @@ class BrowserDataRetriever(DataRetriever):
             time.sleep(random.uniform(3, TIMEOUT))
             self._wait_for_page_item(page, "xpath=//h1[text()='Thanks for visiting']", TIMEOUT)
             
-            browser.close()
+            context.close()
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Browser session finished.")
             
             return AccountData(balance, transactions)
+            
+    def _human_behavior(self, page):
+        # Combined scrolling and mouse movement
+        viewport = page.viewport_size
+        x = random.randint(100, viewport['width'] - 100)
+        y = random.randint(100, viewport['height'] - 100)
+        page.mouse.move(x, y, steps=10)
+        page.evaluate(f"window.scrollBy(0, {random.randint(200, 400)})")
+        time.sleep(random.uniform(0.5, 1.2))
     
     def _check_for_and_reject_offer(self, page):
         no_thanks = page.get_by_text("No thanks")
