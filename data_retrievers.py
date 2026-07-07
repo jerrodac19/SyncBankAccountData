@@ -198,7 +198,7 @@ class BrowserDataRetriever(DataRetriever):
                         date=datetime.strptime(cols.nth(1).text_content(), date_format_string)
                     ))
         
-        page.locator("xpath=//span[text()='Account Summary']").click()
+        page.locator("xpath=//span[text()='Account Summary']").first.click()
         page.wait_for_load_state("networkidle")
         return transactions
 
