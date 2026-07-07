@@ -18,7 +18,7 @@ more-itertools==9.1.0
 oauthlib==3.1.0
 playwright==1.35.0
 playwright-stealth==1.0.6
-protobuf==3.12.1
+protobuf==3.12.4
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pyee==9.0.4
