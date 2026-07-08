@@ -16,6 +16,7 @@
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <CommandLineArguments>-debug</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,17 +33,6 @@
     <Compile Include="GoogleSheets.py" />
     <Compile Include="main.py" />
   </ItemGroup>
-  <ItemGroup>
-    <Interpreter Include=".venv\">
-      <Id>.venv</Id>
-      <Version>3.11</Version>
-      <Description>.venv (Python 3.11 (64-bit))</Description>
-      <InterpreterPath>Scripts\python.exe</InterpreterPath>
-      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
-      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
-      <Architecture>X64</Architecture>
-    </Interpreter>
-  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
        Visual Studio and specify your pre- and post-build commands in
@@ -52,4 +42,15 @@
   </Target>
   <Target Name="AfterBuild">
   </Target>
+  <ItemGroup>
+    <Interpreter Include="..\.venv\">
+      <Id>.venv</Id>
+      <Version>3.7</Version>
+      <Description>.venv (Python 3.7 (32-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X86</Architecture>
+    </Interpreter>
+  </ItemGroup>
 </Project>
