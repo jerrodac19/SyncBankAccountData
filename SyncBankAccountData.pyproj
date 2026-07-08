@@ -13,6 +13,9 @@
     <RootNamespace>SyncBankAccountData</RootNamespace>
     <PublishUrl>\\MR-BADASS\Shared\BillWebsiteScripts\SyncBankAccountData</PublishUrl>
     <InterpreterId>MSBuild|.venv|$(MSBuildProjectFullPath)</InterpreterId>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>-debug</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

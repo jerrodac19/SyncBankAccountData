@@ -4,6 +4,7 @@ import subprocess
 import os
 import random
 import re
+import sys
 from collections import Counter
 from typing import List
 from datetime import datetime
@@ -181,8 +182,17 @@ def check_transaction(transaction: TransactionData, bill_array: List[BillData], 
         send_push_notification("High transaction was made")
 
 if __name__ == "__main__":
+    debug = False
+    if len(sys.argv) > 1:
+        first_argument = sys.argv[1]
+        if first_argument.lower() == "-debug":
+            debug = True
+            print("Debug mode enabled")
     browser_retriever = BrowserDataRetriever()
-    api_store = ApiDataStoreRobust()
+    if debug:
+        api_store = ApiDataStoreRobust(api_url="https://mr-badass/api")
+    else:
+        api_store = ApiDataStoreRobust()
 
     # The main script now orchestrates the process with simple function calls
     try:

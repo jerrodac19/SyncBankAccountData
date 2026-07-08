@@ -212,7 +212,7 @@ class BrowserDataRetriever(DataRetriever):
         while waittime < timeout and item.count() == 0:
             time.sleep(0.5)
             waittime += 0.5
-            
+         
 # --- API Client Class (the new 'bill_functions' logic) ---
 #old api (outdated)
 class ApiDataStore:
@@ -273,6 +273,8 @@ class ApiDataStore:
             return None
             
 class ApiDataStoreRobust:
+    def __init__(self, api_url=API_BASE_URL):
+        self.api_url = api_url
     def _make_request(self, method: str, url: str, data: Optional[Any] = None):
         """Internal helper for making API requests."""
         try:
@@ -304,7 +306,7 @@ class ApiDataStoreRobust:
         return None
 
     def get_last_transactions(self, account: str, number_of_transactions: int) -> List[TransactionData]:
-        url = f"{API_BASE_URL}/transactions?n={number_of_transactions}&accountName={account}"
+        url = f"{self.api_url}/transactions?n={number_of_transactions}&accountName={account}"
         data = self._make_request("GET", url)
         if not data:
             return []
@@ -322,7 +324,7 @@ class ApiDataStoreRobust:
         ]
 
     def add_transaction(self, transaction: TransactionData, account: str):
-        url = f"{API_BASE_URL}/transactions"
+        url = f"{self.api_url}/transactions"
         transaction_dto = {
             "withdrawal": transaction.withdrawal,
             "deposit": transaction.deposit,
@@ -334,7 +336,7 @@ class ApiDataStoreRobust:
         self._make_request("POST", url, data=transaction_dto)
         
     def update_transaction(self, id: int, transaction: TransactionData):
-        url = f"{API_BASE_URL}/transactions/{id}"
+        url = f"{self.api_url}/transactions/{id}"
         transaction_dto = {
             "description": transaction.description,
             "date": transaction.date.isoformat(),
@@ -343,7 +345,7 @@ class ApiDataStoreRobust:
         self._make_request("PUT", url, data=transaction_dto)
 
     def get_bill_array(self) -> List[BillData]:
-        url = f"{API_BASE_URL}/bills"
+        url = f"{self.api_url}/bills"
         data = self._make_request("GET", url)
         if not data:
             return []
@@ -360,7 +362,7 @@ class ApiDataStoreRobust:
         ]
 
     def pay_bill(self, bill: BillData):
-        url = f"{API_BASE_URL}/bills/{bill.bill_id}"
+        url = f"{self.api_url}/bills/{bill.bill_id}"
         update_dto = {
             "id": bill.bill_id,
             "payed": bill.payed
@@ -368,14 +370,14 @@ class ApiDataStoreRobust:
         self._make_request("PUT", url, data=update_dto)
         
     def update_balance(self, balance: float):
-        url = f"{API_BASE_URL}/accountbalances"
+        url = f"{self.api_url}/accountbalances"
         balance_dto = {
             "amount": balance
         }
         self._make_request("POST", url, data=balance_dto)
 
     def update_monitor(self, balance: float):
-        url = f"{API_BASE_URL}/balancemonitors"
+        url = f"{self.api_url}/balancemonitors"
         monitor_dto = {
             "amount": balance
         }
