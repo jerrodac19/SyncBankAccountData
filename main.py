@@ -10,7 +10,7 @@ from typing import List
 from datetime import datetime
 
 from data_retrievers import BrowserDataRetriever, ApiDataStoreRobust
-from data_models import AccountData, TransactionData, BillData
+from data_models import AccountData, TransactionData, BillData, SyncResults
 from GoogleSheets import appendToSheet
 from Walmart import getWalmartReceipt
 
@@ -26,41 +26,10 @@ def send_push_notification(message: str):
     result = subprocess.run(["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", PUSHNOTIFSCRIPT, message], capture_output=True, text=True, check=False)
     print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Push notification result - {result}")
 
-def compare_and_find_new_transactions(local_transactions: List[TransactionData], web_transactions: List[TransactionData]) -> List[TransactionData]:
-    """Compares two lists of transactions to find new ones."""
-    def canonicalize_transaction(t: TransactionData):
-        if t.status == "posted":
-            return (t.withdrawal, t.deposit, t.description, t.date, t.status)
-        else: # status is "pending"
-            return (t.withdrawal, t.deposit, t.description, t.status)
+def find_new_and_updated_transactions(local_transactions: List[TransactionData], web_transactions: List[TransactionData]) -> SyncResults:
+    results = SyncResults(new_transactions=[], updated_transactions=[])
 
-    local_counter = Counter(canonicalize_transaction(t) for t in local_transactions)
-    new_transactions = []
-    
-    for web_t in web_transactions:
-        canonical_web_t = canonicalize_transaction(web_t)
-        if local_counter.get(canonical_web_t, 0) > 0:
-            local_counter[canonical_web_t] -= 1
-        else:
-            new_transactions.append(web_t)
-            
-    return new_transactions
-
-# main.py
-# ... (imports) ...
-
-def sync_and_find_new_transactions(local_transactions: List[TransactionData], web_transactions: List[TransactionData], api_store: ApiDataStoreRobust) -> List[TransactionData]:
-    """
-    Intelligently syncs transactions by finding the best match for updates and adding new ones.
-    This version correctly handles one-to-one mapping to prevent false positives.
-    """
-    matched_local_ids = set() # Use a set for efficient lookups
-    
-    new_transactions = []
-    spreadsheettransactiondata = []
-    walmarttransactions = []
-    spreadsheetwalmartdata = []
-
+    matched_local_ids = set()
     for web_t in web_transactions:
         best_match = None
         for local_t in local_transactions:
@@ -83,52 +52,54 @@ def sync_and_find_new_transactions(local_transactions: List[TransactionData], we
         if best_match:
             # Mark the local transaction as matched
             matched_local_ids.add(best_match.id)
-            # Only update if the local status is 'pending' and the web status is 'posted'.
-            if web_t.status == "posted" and best_match.status == "pending":
-                print(f"Updating transaction {best_match.description} to posted status.")
-                api_store.update_transaction(best_match.id, web_t)
-                if web_t.withdrawal > 0:
-                    amount = 0-web_t.withdrawal
-                else:
-                    amount = web_t.deposit
-                spreadsheettransactiondata.append([web_t.date.strftime("%m/%d/%Y"), amount, web_t.description])
-                if re.search('WM SUPERCENT|WAL-MART', web_t.description):
-                    storeId = re.search('(?<=#)[0-9]+', web_t.description).group()
-                    cardDigits = re.search('(?<=CARD )[0-9]+', web_t.description).group()
-                    walmarttransactions.append({'date' : best_match.creationTime.strftime('%m-%d-%Y'), 'total' : web_t.withdrawal, 'card' : cardDigits, 'store': storeId})
-            if web_t.status == "pending" and best_match.status == "pending" and date_difference > 0:
-                print(f"Updating pending transaction date {best_match.description}")
-                api_store.update_transaction(best_match.id, web_t)
+            # Only update if there is a change in status or if the date has changed.
+            if web_t.status != best_match.status or date_difference > 0:
+                web_t.id = best_match.id  # Ensure the web transaction has the same ID for updating
+                web_t.creationTime = best_match.creationTime  # Preserve the original creation time
+                results.updated_transactions.append(web_t)
         else:
             # If no valid match was found, this is a truly new transaction.
-            new_transactions.append(web_t)
-            if web_t.status == "posted":
-                if web_t.withdrawal > 0:
-                    amount = 0-web_t.withdrawal
-                else:
-                    amount = web_t.deposit
-                spreadsheettransactiondata.append([web_t.date.strftime("%m/%d/%Y"), amount, web_t.description])
-                if re.search('WM SUPERCENT|WAL-MART', web_t.description):
-                    storeId = re.search('(?<=#)[0-9]+', web_t.description).group()
-                    cardDigits = re.search('(?<=CARD )[0-9]+', web_t.description).group()
-                    walmarttransactions.append({'date' : web_t.creationTime.strftime('%m-%d-%Y'), 'total' : web_t.withdrawal, 'card' : cardDigits, 'store': storeId})
-            
-    if len(spreadsheettransactiondata) > 0:
-        appendToSheet(spreadsheettransactiondata)
-    if len(walmarttransactions) > 0:
-        for w in walmarttransactions:
-            print(f"attempting to pull walmart receipt data - {w}")
-            walmartdata = getWalmartReceipt([w])
-            print(f"sleeping 10 seconds before pulling next walmart data")
-            time.sleep(10)
-            for d in walmartdata:
-                for i in d:
-                    datestr = datetime.strptime(i['date'], '%m-%d-%y %H:%M:%S').strftime("%m/%d/%Y %H:%M:%S")
-                    spreadsheetwalmartdata.append([i['order'],datestr,i['description'],i['price']])
-        if len(spreadsheetwalmartdata) > 0:
-            appendToSheet(spreadsheetwalmartdata, '149370kuuV-ifi98q1Bb9-_DMsiwoGz3o7qkG8oYrOZw', 'Purchases')
+            results.new_transactions.append(web_t)
+                
+    return results
+
+def is_walmart(transaction: TransactionData) -> bool:
+    """Checks if a transaction is from Walmart based on its description."""
+    return re.search('WM SUPERCENT|WAL-MART', transaction.description) is not None
+
+def extract_walmart_details(transaction: TransactionData):
+    """Extracts store ID and card digits from a Walmart transaction description."""
+    storeId_match = re.search('(?<=#)[0-9]+', transaction.description)
+    cardDigits_match = re.search('(?<=CARD )[0-9]+', transaction.description)
+    date_match = re.search('(?<= ON )[0-9]{2}/[0-9]{2}', transaction.description)
     
-    return new_transactions
+    if storeId_match and cardDigits_match and date_match:
+        return {
+            'date': datetime.strptime(date_match.group() + f"/{transaction.date.year}", '%m/%d/%Y').strftime("%m-%d-%Y"),
+            'total': transaction.withdrawal,
+            'store': storeId_match.group(),
+            'card': cardDigits_match.group()
+        }
+    else:
+        return None
+
+def append_walmart_receipt_data(walmart_transactions: List[dict]):
+    """Fetches Walmart receipt data and appends it to the Google Sheet."""
+    spreadsheetwalmartdata = []
+    first_transaction = True
+    for w in walmart_transactions:
+        if not first_transaction:
+            print(f"Sleeping 10 seconds before pulling next Walmart data")
+            time.sleep(10)
+        first_transaction = False
+        print(f"Attempting to pull Walmart receipt data - {w}")
+        walmartdata = getWalmartReceipt(w)
+        for d in walmartdata:
+            for i in d:
+                datestr = datetime.strptime(i['date'], '%m-%d-%y %H:%M:%S').strftime("%m/%d/%Y %H:%M:%S")
+                spreadsheetwalmartdata.append([i['order'], datestr, i['description'], i['price']])
+    if len(spreadsheetwalmartdata) > 0:
+        appendToSheet(spreadsheetwalmartdata, '149370kuuV-ifi98q1Bb9-_DMsiwoGz3o7qkG8oYrOZw', 'Purchases')
 
 def process_and_sync_transactions(browser_data: AccountData, api_store: ApiDataStoreRobust):
     """The core logic for syncing data and checking bills."""
@@ -146,12 +117,18 @@ def process_and_sync_transactions(browser_data: AccountData, api_store: ApiDataS
     # Store original bill statuses for later comparison
     orig_bill_statuses = {bill.bill_id: bill.payed for bill in bill_array}
     
-    # Compare and find new transactions
-    #new_transactions = compare_and_find_new_transactions(local_transactions, browser_data.transactions)
-    new_transactions = sync_and_find_new_transactions(local_transactions, browser_data.transactions, api_store)
+    # Compare and find new transactions and updates
+    sync_data = find_new_and_updated_transactions(local_transactions, browser_data.transactions)
+
+    for t in sync_data.updated_transactions:
+        if t.status == "posted":
+            print(f"Updating transaction {t.description} to posted status.")
+        else:
+            print(f"Updating pending transaction date {t.description}")
+        api_store.update_transaction(t.id, t)
     
-    # Reverse new transactions to add in the correct order
-    new_transactions.reverse()
+    # Reverse new transactions to add in the correct chronological order
+    new_transactions = list(reversed(sync_data.new_transactions))
     
     # Add new transactions to the API and check for paid bills
     for new_transaction in new_transactions:
@@ -165,6 +142,29 @@ def process_and_sync_transactions(browser_data: AccountData, api_store: ApiDataS
             print(f"Updating database for {bill.title} bill status - {bill.payed}")
             send_push_notification(f"Bill updated - {bill.title}")
             api_store.pay_bill(bill)
+    
+    #Update Google Sheets with new and updated transactions
+    transaction_spreadsheet_queue = []
+    walmart_spreadsheet_queue = []
+
+    for t in sync_data.updated_transactions:
+        if t.status == "posted":
+            amount = -t.withdrawal if t.withdrawal > 0 else t.deposit
+            transaction_spreadsheet_queue.append([t.date.strftime("%m/%d/%Y"), amount, t.description])
+            if is_walmart(t):
+                walmart_spreadsheet_queue.append(extract_walmart_details(t))
+
+    for t in new_transactions:
+        if t.status == "posted":
+            amount = -t.withdrawal if t.withdrawal > 0 else t.deposit
+            transaction_spreadsheet_queue.append([t.date.strftime("%m/%d/%Y"), amount, t.description])
+            if is_walmart(t):
+                walmart_spreadsheet_queue.append(extract_walmart_details(t))
+
+    if len(transaction_spreadsheet_queue) > 0:
+        appendToSheet(transaction_spreadsheet_queue)
+    if len(walmart_spreadsheet_queue) > 0:
+        append_walmart_receipt_data(walmart_spreadsheet_queue)
 
 def check_transaction(transaction: TransactionData, bill_array: List[BillData], is_payed: bool):
     """Logic to check if a transaction pays a bill."""

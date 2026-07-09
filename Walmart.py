@@ -33,11 +33,10 @@ def getWalmartReceipt(receiptInfo):
         recieptdata = []
         try:
             page.goto("https://www.walmart.com/receipt-lookup", timeout=60000)
-            for r in receiptInfo:
-                try:
-                    recieptdata.append(page.evaluate(f"getReceiptItems('{r['date']}', '{r['total']}', '{r['card']}', '{r['store']}')"))
-                except Exception as e:
-                    print(f"error reading walmart reciept data - {e}");
+            try:
+                recieptdata.append(page.evaluate(f"getReceiptItems('{receiptInfo['date']}', '{receiptInfo['total']}', '{receiptInfo['card']}', '{receiptInfo['store']}')"))
+            except Exception as e:
+                print(f"error reading walmart reciept data - {e}");
         except Exception as e:
             print(f"error loading walmart page - {e}")
     return recieptdata

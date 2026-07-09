@@ -31,3 +31,9 @@ class AccountData:
     def __init__(self, balance: float, transactions: List[TransactionData]):
         self.balance = balance
         self.transactions = transactions
+
+class SyncResults:
+    """A data object representing the segregated outcome of a transaction sync."""
+    def __init__(self, new_transactions: List[TransactionData] = None, updated_transactions: List[TransactionData] = None):
+        self.new_transactions = new_transactions if new_transactions is not None else []
+        self.updated_transactions = updated_transactions if updated_transactions is not None else []
