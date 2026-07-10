@@ -87,6 +87,7 @@ class BrowserDataRetriever():
                 page.locator(usernamefield).wait_for(state="attached")
                 page.locator(usernamefield).type(username, delay=random.randint(60, 150))
                 page.locator(passwordfield).type(password, delay=random.randint(60, 150))
+                time.sleep(random.uniform(1.0, 3.0)) # Pause for 1-3 seconds to mimic human behavior before clicking the sign-on button
                 page.locator(signonbutton).click()
                 page.wait_for_load_state("networkidle")
                 time.sleep(random.uniform(2, 4))
