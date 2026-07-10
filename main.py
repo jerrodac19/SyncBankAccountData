@@ -188,11 +188,12 @@ if __name__ == "__main__":
         if first_argument.lower() == "-debug":
             debug = True
             print("Debug mode enabled")
-    browser_retriever = BrowserDataRetriever()
     if debug:
         api_store = ApiDataStoreRobust(api_url="https://mr-badass/api")
+        browser_retriever = BrowserDataRetriever(headless=False)
     else:
         api_store = ApiDataStoreRobust()
+        browser_retriever = BrowserDataRetriever()
 
     # The main script now orchestrates the process with simple function calls
     try:

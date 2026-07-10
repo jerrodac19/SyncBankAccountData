@@ -1,5 +1,4 @@
 # data_retrievers.py
-from abc import ABC, abstractmethod
 import time
 from playwright.sync_api import sync_playwright
 from playwright_stealth import stealth_sync
@@ -23,15 +22,10 @@ ERRORSCREENSHOT2 = "errorscreenshot_balance.png"
 ERRORSCREENSHOT3 = "errorscreenshot_offer.png"
 TIMEOUT = 6
 
-# --- Abstract Base Class for Retrieval Strategies ---
-class DataRetriever(ABC):
-    @abstractmethod
-    def retrieve_all_data(self) -> AccountData:
-        """Abstract method to retrieve all account data."""
-        pass
-
 # --- Browser Automation Class (the new 'main' logic for scraping) ---
-class BrowserDataRetriever(DataRetriever):
+class BrowserDataRetriever():
+    def __init__(self, headless = True):
+        self.headless = headless
     def retrieve_all_data(self, accountstring: str, num_transactions: int) -> AccountData:
         print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Starting browser session.")
         workingDir = os.path.dirname(os.path.realpath(__file__))
@@ -52,7 +46,7 @@ class BrowserDataRetriever(DataRetriever):
             # Persistent context replaces the need to manually load/save storageState
             context = p.chromium.launch_persistent_context(
                 user_data_dir=user_data_path,
-                headless=True,
+                headless=self.headless,
                 args=browser_args,
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
                 viewport={"width": 1920, "height": 1080},
@@ -212,65 +206,6 @@ class BrowserDataRetriever(DataRetriever):
         while waittime < timeout and item.count() == 0:
             time.sleep(0.5)
             waittime += 0.5
-         
-# --- API Client Class (the new 'bill_functions' logic) ---
-#old api (outdated)
-class ApiDataStore:
-    def get_last_transactions(self, account: str, number_of_transactions: int) -> List[TransactionData]:
-        date_format_string = "%Y-%m-%d %H:%M:%S.000000"
-        data = self._get_web_request(f"{LOCALWEBADDRESS}/Transactions.php?GroupID=1&AccountName={account}&Number={number_of_transactions}")
-        if not data:
-            return []
-        
-        return [
-            TransactionData(
-                withdrawal=float(d["Withdrawal"]),
-                deposit=float(d["Deposit"]),
-                description=d["Description"],
-                status=d["Status"],
-                date=datetime.strptime(d["Date"]["date"], date_format_string)
-            ) for d in data
-        ]
-
-    def add_transaction(self, transaction: TransactionData, account: str):
-        web_description = transaction.description.replace("%", "%25").replace("#", "%23").replace("&", "%26").replace("+", "%2B")
-        self._get_web_request(f"{LOCALWEBADDRESS}/AddTransaction.php?GroupID=1&Withdrawal={transaction.withdrawal}&Deposit={transaction.deposit}&Description={web_description}&Date={transaction.date}&Status={transaction.status}&AccountName={account}")
-
-    def get_bill_array(self) -> List[BillData]:
-        data = self._get_web_request(f"{LOCALWEBADDRESS}/bills.php")
-        if not data:
-            return []
-            
-        return [
-            BillData(
-                bill_id=d["Id"],
-                title=d["Title"],
-                amount=float(d["Amount"]),
-                payed=d["Payed"],
-                due_date=d["DueDate"]["date"] # Note: The original code used a dictionary here, which may need to be handled more gracefully if it's not a standard datetime object.
-            ) for d in data
-        ]
-
-    def pay_bill(self, bill: BillData):
-        self._get_web_request(f"{LOCALWEBADDRESS}/updatebill.php?Id={bill.bill_id}&Payed={bill.payed}")
-
-    def update_balance(self, balance: float):
-        self._get_web_request(f"{LOCALWEBADDRESS}/UpdateBalance.php?Amount={balance}")
-
-    def update_monitor(self, balance: float):
-        self._get_web_request(f"{LOCALWEBADDRESS}/UpdateMonitor.php?Amount={balance}")
-        
-    def _get_web_request(self, url: str):
-        """Internal helper for making API requests."""
-        response = requests.get(url)
-        if response.status_code == 200:
-            try:
-                return response.json()
-            except:
-                return None
-        else:
-            print(f"Request failed with status code: {response.status_code}")
-            return None
             
 class ApiDataStoreRobust:
     def __init__(self, api_url=API_BASE_URL):
