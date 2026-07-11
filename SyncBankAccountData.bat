@@ -1,2 +1,2 @@
 @echo off
-call .venv\Scripts\python.exe main.py >> ..\SyncBankAccountData.Log 2>&1
+call .venv311\Scripts\python.exe main.py >> ..\SyncBankAccountData.Log 2>&1

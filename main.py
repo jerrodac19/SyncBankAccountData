@@ -182,6 +182,7 @@ def check_transaction(transaction: TransactionData, bill_array: List[BillData], 
         send_push_notification("High transaction was made")
 
 if __name__ == "__main__":
+    print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Running on Python {sys.version}")
     debug = False
     if len(sys.argv) > 1:
         first_argument = sys.argv[1]
