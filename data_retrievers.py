@@ -63,8 +63,8 @@ class BrowserDataRetriever():
             
             # Login and navigation logic (moved from get_balance)
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigating to {ACCOUNTWEBSITE}")
-            page.goto(ACCOUNTWEBSITE, timeout=60000)
             try:
+                page.goto(ACCOUNTWEBSITE, timeout=60000)
                 page.wait_for_load_state("domcontentloaded")
             except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Excpetion waiting for webpage to load: {e}")
