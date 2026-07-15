@@ -72,6 +72,9 @@ class BrowserDataRetriever():
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {ERRORSCREENSHOT1}")
             
             time.sleep(1)
+            screenshotpath = "pre_login.png"
+            page.screenshot(path=screenshotpath)
+            print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Attempting Login")
             usernamefield = "#j_username"
             username = "jerrodac18"
@@ -94,6 +97,9 @@ class BrowserDataRetriever():
             except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Exception in logging in: {e}")
             
+            screenshotpath = "post_login.png"
+            page.screenshot(path=screenshotpath)
+            print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
             self._check_for_and_reject_offer(page)
             
             # Add human noise only when on the dashboard
