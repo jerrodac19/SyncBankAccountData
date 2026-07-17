@@ -140,11 +140,9 @@ class BrowserDataRetriever():
         time.sleep(random.uniform(0.5, 1.2))
     
     def _check_for_and_reject_offer(self, page):
-        no_thanks = page.get_by_text("No thanks")
-        view_offer = page.get_by_text("View your offer")
-        income = page.get_by_text("Update my income")
+        no_thanks = page.get_by_text("No thanks", exact=False)
         infomessage = page.get_by_text("Continue to online banking")
-        if (no_thanks.count() > 0 and (view_offer.count() > 0 or income.count() > 0)):
+        if (no_thanks.count() > 0):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Offer found")
             page.screenshot(path=ERRORSCREENSHOT3)
             no_thanks.click()
