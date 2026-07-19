@@ -28,9 +28,10 @@ class BillData:
 
 class AccountData:
     """A comprehensive data object for all retrieved account information."""
-    def __init__(self, balance: float, transactions: List[TransactionData]):
+    def __init__(self, balance: float, transactions: List[TransactionData], offer_found = False):
         self.balance = balance
         self.transactions = transactions
+        self.offer_found = offer_found
 
 class SyncResults:
     """A data object representing the segregated outcome of a transaction sync."""

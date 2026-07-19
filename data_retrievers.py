@@ -100,7 +100,7 @@ class BrowserDataRetriever():
             screenshotpath = "post_login.png"
             page.screenshot(path=screenshotpath)
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
-            self._check_for_and_reject_offer(page)
+            offer_detected = self._check_for_and_reject_offer(page)
             
             # Add human noise only when on the dashboard
             self._human_behavior(page)
@@ -128,7 +128,7 @@ class BrowserDataRetriever():
             context.close()
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Browser session finished.")
             
-            return AccountData(balance, transactions)
+            return AccountData(balance, transactions, offer_detected)
             
     def _human_behavior(self, page):
         # Combined scrolling and mouse movement
@@ -146,10 +146,14 @@ class BrowserDataRetriever():
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Offer found")
             page.screenshot(path=ERRORSCREENSHOT3)
             no_thanks.click()
+            return True
         elif (infomessage.count() > 0):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} info page found")
             page.screenshot(path=ERRORSCREENSHOT3)
             infomessage.click()
+            return True
+        else:
+            return False
     
     def _get_balance(self, page) -> float:
         """Internal helper to get the account balance."""

@@ -106,6 +106,10 @@ def process_and_sync_transactions(browser_data: AccountData, api_store: ApiDataS
     # Check balance and send notifications if needed
     if browser_data.balance < BALANCEMIN:
         send_push_notification(f"Balance low - ${browser_data.balance}")
+
+    # Check for intercepted portal offers
+    if browser_data.offer_found:
+        send_push_notification("Bank portal intercepted an offer or alert page.")
     
     api_store.update_balance(browser_data.balance)
     api_store.update_monitor(browser_data.balance)
