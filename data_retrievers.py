@@ -93,7 +93,7 @@ class BrowserDataRetriever():
                 time.sleep(random.uniform(1.0, 3.0)) # Pause for 1-3 seconds to mimic human behavior before clicking the sign-on button
                 page.locator(signonbutton).click()
                 page.wait_for_load_state("networkidle")
-                time.sleep(random.uniform(2, 4))
+                time.sleep(random.uniform(4, 7))
             except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Exception in logging in: {e}")
             
