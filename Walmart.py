@@ -6,7 +6,7 @@ import random
 def getWalmartReceipt(receiptInfo):
     #Get Script Path
     workingDir = os.path.dirname(os.path.realpath(__file__))
-    user_data_dir = workingDir + '\\browser_profile'
+    user_data_dir = workingDir + '\\browser_profile_walmart'
     with sync_playwright() as p:
         browser_args = [
             "--no-sandbox", # Essential for some Linux environments
