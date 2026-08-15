@@ -24,7 +24,7 @@ TIMEOUT = 6
 
 # --- Browser Automation Class (the new 'main' logic for scraping) ---
 class BrowserDataRetriever():
-    def __init__(self, headless = True):
+    def __init__(self, headless = False):
         self.headless = headless
     def retrieve_all_data(self, accountstring: str, num_transactions: int) -> AccountData:
         print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Starting browser session.")
@@ -33,31 +33,20 @@ class BrowserDataRetriever():
         with sync_playwright() as p:
             #create a simulated page to mimic human interaction
             browser_args = [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
                 "--disable-blink-features=AutomationControlled",
-                "--disable-infobars",
-                "--disable-extensions",
-                "--mute-audio",
-                "--disable-dev-shm-usage",
-                "--start-maximized"
+                "--window-position=-2000,-2000",  # Throws the window off your visible display coordinates
+                "--window-size=1024,768"
             ]
 
             # Persistent context replaces the need to manually load/save storageState
             context = p.chromium.launch_persistent_context(
                 user_data_dir=user_data_path,
                 headless=self.headless,
-                args=browser_args,
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-                viewport={"width": 1920, "height": 1080},
-                locale="en-US",
-                timezone_id="America/Phoenix",
-                geolocation={"latitude": 33.424768, "longitude": -111.738027, "accuracy": 100},
-                permissions=['geolocation']
+                args=browser_args
             )
             
             page = context.pages[0] if context.pages else context.new_page()
-            stealth_sync(page)
+            #stealth_sync(page)
 
             time.sleep(random.uniform(3, TIMEOUT))
             
