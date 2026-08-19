@@ -61,7 +61,6 @@ class BrowserDataRetriever():
                 page.screenshot(path=ERRORSCREENSHOT1)
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {ERRORSCREENSHOT1}")
             time.sleep(1)
-            print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Attempting Login")
             usernamefield = "#j_username"
             username = "jerrodac18"
@@ -79,6 +78,7 @@ class BrowserDataRetriever():
                 page.locator(passwordfield).type(password, delay=random.randint(60, 150))
                 screenshotpath = f"pre_login_{run_id_string}.png"
                 page.screenshot(path=screenshotpath)
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
                 time.sleep(random.uniform(1.0, 3.0)) # Pause for 1-3 seconds to mimic human behavior before clicking the sign-on button
                 page.locator(signonbutton).click()
                 page.wait_for_load_state("networkidle")
