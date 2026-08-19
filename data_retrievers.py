@@ -17,9 +17,10 @@ ACCOUNTWEBSITE = "https://connect.secure.wellsfargo.com/auth/login/present?origi
 LOCALWEBADDRESS = "http://127.0.0.1:1234"
 API_BASE_URL = "https://localhost/api"
 CA_CERT_PATH = 'C:/certs/rootCA.pem'
-ERRORSCREENSHOT1 = "errorscreenshot_navigation.png"
-ERRORSCREENSHOT2 = "errorscreenshot_balance.png"
-ERRORSCREENSHOT3 = "errorscreenshot_offer.png"
+run_id_string = time.strftime('%m_%d_%y_%H_%M_%S', time.localtime())
+ERRORSCREENSHOT1 = f"errorscreenshot_navigation_{run_id_string}.png"
+ERRORSCREENSHOT2 = f"errorscreenshot_balance_{run_id_string}.png"
+ERRORSCREENSHOT3 = f"errorscreenshot_offer_{run_id_string}.png"
 TIMEOUT = 6
 
 # --- Browser Automation Class (the new 'main' logic for scraping) ---
@@ -59,10 +60,7 @@ class BrowserDataRetriever():
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Excpetion waiting for webpage to load: {e}")
                 page.screenshot(path=ERRORSCREENSHOT1)
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {ERRORSCREENSHOT1}")
-            
             time.sleep(1)
-            screenshotpath = "pre_login.png"
-            page.screenshot(path=screenshotpath)
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Attempting Login")
             usernamefield = "#j_username"
@@ -79,6 +77,8 @@ class BrowserDataRetriever():
                 page.locator(usernamefield).wait_for(state="attached")
                 page.locator(usernamefield).type(username, delay=random.randint(60, 150))
                 page.locator(passwordfield).type(password, delay=random.randint(60, 150))
+                screenshotpath = f"pre_login_{run_id_string}.png"
+                page.screenshot(path=screenshotpath)
                 time.sleep(random.uniform(1.0, 3.0)) # Pause for 1-3 seconds to mimic human behavior before clicking the sign-on button
                 page.locator(signonbutton).click()
                 page.wait_for_load_state("networkidle")
@@ -86,7 +86,7 @@ class BrowserDataRetriever():
             except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Exception in logging in: {e}")
             
-            screenshotpath = "post_login.png"
+            screenshotpath = f"post_login_{run_id_string}.png"
             page.screenshot(path=screenshotpath)
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
             offer_detected = self._check_for_and_reject_offer(page)
