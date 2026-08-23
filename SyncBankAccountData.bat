@@ -1,3 +1,3 @@
 @echo off
 call .venv311\Scripts\python.exe main.py >> ..\SyncBankAccountData.Log 2>&1
-forfiles /m *.png /d -3 /c "cmd /c del @path & echo deleting @path" 2>NUL >> ..\SyncBankAccountData.Log 2>&1
+forfiles /m *.png /d -3 /c "cmd /c del @path && echo deleting @path" 2>NUL >> ..\SyncBankAccountData.Log
