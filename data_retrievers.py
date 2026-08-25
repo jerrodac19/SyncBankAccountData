@@ -74,8 +74,8 @@ class BrowserDataRetriever():
                 page.wait_for_selector(usernamefield)
                 page.locator(usernamefield).wait_for(state="visible")
                 page.locator(usernamefield).wait_for(state="attached")
-                page.locator(usernamefield).type(username, delay=random.randint(60, 150))
-                page.locator(passwordfield).type(password, delay=random.randint(60, 150))
+                self._random_type(page.locator(usernamefield), username)
+                self._random_type(page.locator(passwordfield), password)
                 screenshotpath = f"pre_login_{run_id_string}.png"
                 page.screenshot(path=screenshotpath)
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {screenshotpath}")
@@ -118,7 +118,13 @@ class BrowserDataRetriever():
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Browser session finished.")
             
             return AccountData(balance, transactions, offer_detected)
-            
+    
+    def _random_type(self, locator, text):
+        """Simulates human typing by adding random delays between keystrokes."""
+        for char in text:
+            locator.type(char, delay=random.randint(60, 150))  # Random delay between 60ms and 150ms
+            time.sleep(random.uniform(0.05, 0.2))  # Additional random pause between keystrokes
+    
     def _human_behavior(self, page):
         # Combined scrolling and mouse movement
         viewport = page.viewport_size
@@ -165,7 +171,7 @@ class BrowserDataRetriever():
         date_format_string = "%m/%d/%y"
         page.locator(f"xpath=//span[text()='...{account}']").click()
         self._wait_for_page_item(page, "xpath=//tbody/tr", TIMEOUT)
-        
+        self._human_behavior(page)
         transactions = []
         status_str = "pending"
         purchases = page.locator("xpath=//tbody/tr")
