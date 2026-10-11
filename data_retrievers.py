@@ -1,6 +1,7 @@
 # data_retrievers.py
 import time
 from playwright.sync_api import sync_playwright
+from playwright.sync_api import Error
 from playwright_stealth import stealth_sync
 import random
 import re
@@ -137,15 +138,21 @@ class BrowserDataRetriever():
     def _check_for_and_reject_offer(self, page):
         no_thanks = page.get_by_text("No thanks", exact=False)
         infomessage = page.get_by_text("Continue to online banking")
-        if (no_thanks.count() > 0):
+        if (no_thanks.is_visible(timeout=3000)):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Offer found")
             page.screenshot(path=ERRORSCREENSHOT3)
-            no_thanks.click()
+            try:
+                no_thanks.click()
+            except Error as e:
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigation triggered upon clicking offer rejection: {e}")
             return True
-        elif (infomessage.count() > 0):
+        elif (infomessage.is_visible(timeout=3000)):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} info page found")
             page.screenshot(path=ERRORSCREENSHOT3)
-            infomessage.click()
+            try:
+                infomessage.click()
+            except Error as e:
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigation triggered upon clicking info message: {e}")
             return True
         else:
             return False
