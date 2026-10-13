@@ -137,12 +137,21 @@ class BrowserDataRetriever():
     
     def _check_for_and_reject_offer(self, page):
         no_thanks = page.get_by_text("No thanks", exact=False)
+        remind_me_later = page.get_by_text("Remind me later", exact=False)
         infomessage = page.get_by_text("Continue to online banking")
         if (no_thanks.is_visible(timeout=3000)):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Offer found")
             page.screenshot(path=ERRORSCREENSHOT3)
             try:
                 no_thanks.click()
+            except Error as e:
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigation triggered upon clicking offer rejection: {e}")
+            return True
+        elif (remind_me_later.is_visible(timeout=3000)):
+            print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Offer found")
+            page.screenshot(path=ERRORSCREENSHOT3)
+            try:
+                remind_me_later.click()
             except Error as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigation triggered upon clicking offer rejection: {e}")
             return True
