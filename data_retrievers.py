@@ -36,14 +36,13 @@ class BrowserDataRetriever():
             #create a simulated page to mimic human interaction
             browser_args = [
                 "--disable-blink-features=AutomationControlled",
-                "--window-size=1280,720"
+                "--window-size=1024,768"
             ]
 
             # Persistent context replaces the need to manually load/save storageState
             context = p.chromium.launch_persistent_context(
                 user_data_dir=user_data_path,
                 headless=self.headless,
-                viewport={"width": 1280, "height": 720},  # Matches window-size exactly
                 ignore_default_args=["--enable-automation"],
                 args=browser_args
             )
@@ -176,10 +175,16 @@ class BrowserDataRetriever():
             balance = float(page.locator(balance_selector).nth(1).text_content().replace("$", "").replace(",", ""))
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Balance found - ${balance}")
         else:
-            print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Unable to find balance")
-            page.screenshot(path=ERRORSCREENSHOT2)
-            print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {ERRORSCREENSHOT2}")
-            raise ValueError("Unable to find balance")
+            print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Unable to find balance, attempting again after waiting 2 minutes")
+            time.sleep(120)
+            if page.locator(balance_selector).count() > 0:
+                balance = float(page.locator(balance_selector).nth(1).text_content().replace("$", "").replace(",", ""))
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Balance found - ${balance}")
+            else:
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Unable to find balance")
+                page.screenshot(path=ERRORSCREENSHOT2)
+                print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Screenshot saved to {ERRORSCREENSHOT2}")
+                raise ValueError("Unable to find balance")
         
         return balance
 
