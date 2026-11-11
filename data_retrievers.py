@@ -36,14 +36,15 @@ class BrowserDataRetriever():
             #create a simulated page to mimic human interaction
             browser_args = [
                 "--disable-blink-features=AutomationControlled",
-                "--window-position=-2000,-2000",  # Throws the window off your visible display coordinates
-                "--window-size=1024,768"
+                "--window-size=1280,720"
             ]
 
             # Persistent context replaces the need to manually load/save storageState
             context = p.chromium.launch_persistent_context(
                 user_data_dir=user_data_path,
                 headless=self.headless,
+                viewport={"width": 1280, "height": 720},  # Matches window-size exactly
+                ignore_default_args=["--enable-automation"],
                 args=browser_args
             )
             
