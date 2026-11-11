@@ -36,6 +36,7 @@ class BrowserDataRetriever():
             #create a simulated page to mimic human interaction
             browser_args = [
                 "--disable-blink-features=AutomationControlled",
+                "--window-position=-2000,-2000",
                 "--window-size=1024,768"
             ]
 
