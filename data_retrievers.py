@@ -143,25 +143,28 @@ class BrowserDataRetriever():
         if (no_thanks.is_visible(timeout=3000)):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Offer found")
             page.screenshot(path=ERRORSCREENSHOT3)
+            time.sleep(5)
             try:
                 no_thanks.click()
-            except Error as e:
+            except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigation triggered upon clicking offer rejection: {e}")
             return True
         elif (remind_me_later.is_visible(timeout=3000)):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Offer found")
             page.screenshot(path=ERRORSCREENSHOT3)
+            time.sleep(5)
             try:
                 remind_me_later.click()
-            except Error as e:
+            except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigation triggered upon clicking offer rejection: {e}")
             return True
         elif (infomessage.is_visible(timeout=3000)):
             print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} info page found")
             page.screenshot(path=ERRORSCREENSHOT3)
+            time.sleep(5)
             try:
                 infomessage.click()
-            except Error as e:
+            except Exception as e:
                 print(f"{time.strftime('%m/%d/%y %H:%M:%S', time.localtime())} Navigation triggered upon clicking info message: {e}")
             return True
         else:
